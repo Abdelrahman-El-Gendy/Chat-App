@@ -1,0 +1,16 @@
+# Project exclude paths
+/.gradle/
+/app/build/
+/app/build/intermediates/javac/debug/classes/
+/build/
+/core/data/build/
+/core/data/build/intermediates/javac/debug/classes/
+/core/domain/build/
+/core/ui/build/
+/feature/auth_identity/build/
+/feature/auth_identity/build/intermediates/javac/debug/classes/
+/feature/chat_room/build/
+/feature/chat_room/build/intermediates/javac/debug/classes/
+/feature/media/build/
+/feature/work/build/
+/feature/work/build/intermediates/javac/debug/classes/
