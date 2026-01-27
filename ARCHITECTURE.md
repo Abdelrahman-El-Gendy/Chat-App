@@ -36,6 +36,14 @@ Hilt is used for dependency injection across all modules. `IWorkScheduler` inter
 - **Aesthetics**: Custom color palette with soft gradients, asymmetrical bubble shapes, and soft shadows to provide a premium feel.
 - **Media Support**: Modern Photo Picker is used for granular permissions, avoiding the need for broad storage access.
 
+### 6. Scoped Storage & File Correctness
+To ensure robust media handling without persistent storage permissions:
+- **Copy-First Strategy**: Selected media from the Photo Picker is immediately copied to the app's internal private cache.
+- **Worker Isolation**: Background workers operate on these internal files, guaranteeing access even if the app is killed or original permissions expire.
+
+### 7. Android 14+ Compliance
+- **Foreground Services**: Uploads use `FOREGROUND_SERVICE_TYPE_DATA_SYNC` to comply with stricter background execution limits on newer Android versions.
+
 ## Future Improvements
 - Local caching of messages using Room to support offline reading.
 - End-to-end encryption for private messages.

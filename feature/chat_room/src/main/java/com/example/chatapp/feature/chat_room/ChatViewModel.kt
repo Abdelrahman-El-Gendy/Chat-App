@@ -88,12 +88,22 @@ class ChatViewModel @Inject constructor(
 
     fun sendMessage(text: String?, mediaUris: List<String>? = null) {
         val state = _uiState.value
-        sendMessageUseCase(
-            text = text,
-            mediaUris = mediaUris,
-            senderId = state.currentUser,
-            senderName = state.currentUserName
-        )
+        val currentUser = state.currentUser
+        val currentUserName = state.currentUserName
+
+        viewModelScope.launch {
+            try {
+                sendMessageUseCase(
+                    text = text,
+                    mediaUris = mediaUris,
+                    senderId = currentUser,
+                    senderName = currentUserName
+                )
+            } catch (e: Exception) {
+                // Handle potential errors from suspend call
+                _uiState.update { it.copy(error = "Failed to send message: ${e.message}") }
+            }
+        }
     }
 
     fun deleteMessage(messageId: String) {

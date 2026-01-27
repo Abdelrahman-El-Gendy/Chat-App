@@ -7,7 +7,7 @@ import javax.inject.Inject
 class SendMessageUseCase @Inject constructor(
     private val repository: IMessageRepository
 ) {
-    operator fun invoke(text: String?, mediaUris: List<String>?, senderId: String, senderName: String) {
+    suspend operator fun invoke(text: String?, mediaUris: List<String>?, senderId: String, senderName: String) {
         repository.queueMessage(text, mediaUris, senderId, senderName)
     }
 
