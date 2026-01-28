@@ -13,15 +13,28 @@ import com.example.chatapp.core.ui.mvi.UiIntent
 sealed class ChatIntent : UiIntent {
     
     /**
-     * User wants to send a message
+     * User updated the message input text
      * 
-     * @param text The message text (can be null if only sending media)
-     * @param mediaUris List of media URIs to attach (can be null or empty)
+     * @param text The new input text
      */
-    data class SendMessage(
-        val text: String?,
-        val mediaUris: List<String>? = null
-    ) : ChatIntent()
+    data class UpdateMessageInput(val text: String) : ChatIntent()
+    
+    /**
+     * User selected media to attach
+     * 
+     * @param uris List of media URI strings
+     */
+    data class UpdateSelectedMedia(val uris: List<String>) : ChatIntent()
+    
+    /**
+     * User cleared selected media
+     */
+    object ClearSelectedMedia : ChatIntent()
+    
+    /**
+     * User wants to send a message (uses current input state)
+     */
+    object SendMessage : ChatIntent()
     
     /**
      * User wants to delete a message

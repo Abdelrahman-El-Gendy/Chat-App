@@ -23,27 +23,35 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.chatapp.feature.chat_room.R
 
+/**
+ * Stateless message input field composable.
+ * 
+ * All state is hoisted to the parent (via ViewModel):
+ * - text: Current input text
+ * - selectedMediaUris: List of selected media URIs
+ * - canSend: Whether the send button should be enabled
+ * 
+ * This composable is side-effect free - no LaunchedEffect, no internal state.
+ * This makes it predictable, testable, and prevents unnecessary recompositions.
+ * 
+ * @param text The current input text (hoisted state)
+ * @param onTextChange Callback when text changes
+ * @param selectedMediaUris List of selected media URI strings (hoisted state)
+ * @param canSend Whether the send button should be enabled (derived state)
+ * @param onSendMessage Callback when send button is clicked
+ * @param onPickMedia Callback to open media picker
+ * @param onClearMedia Callback to clear selected media
+ */
 @Composable
 fun MessageInputField(
-    onSendMessage: (String?, List<String>?) -> Unit,
+    text: String,
+    onTextChange: (String) -> Unit,
+    selectedMediaUris: List<String>,
+    canSend: Boolean,
+    onSendMessage: () -> Unit,
     onPickMedia: () -> Unit,
-    selectedMedia: List<Uri> = emptyList(),
-    onClearMedia: () -> Unit = {},
-    onTyping: (Boolean) -> Unit = {}
+    onClearMedia: () -> Unit
 ) {
-    var text by remember { mutableStateOf("") }
-
-    // Typing status logic
-    LaunchedEffect(text) {
-        if (text.isNotBlank()) {
-            onTyping(true)
-            kotlinx.coroutines.delay(3000)
-            onTyping(false)
-        } else {
-            onTyping(false)
-        }
-    }
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -51,9 +59,9 @@ fun MessageInputField(
             .navigationBarsPadding()
     ) {
         // Selected media preview
-        if (selectedMedia.isNotEmpty()) {
+        if (selectedMediaUris.isNotEmpty()) {
             MediaPreviewRow(
-                selectedMedia = selectedMedia,
+                selectedMediaUris = selectedMediaUris,
                 onClearMedia = onClearMedia
             )
         }
@@ -61,23 +69,22 @@ fun MessageInputField(
         // Input field surface
         InputFieldSurface(
             text = text,
-            onTextChange = { text = it },
-            hasSelectedMedia = selectedMedia.isNotEmpty(),
+            onTextChange = onTextChange,
+            hasSelectedMedia = selectedMediaUris.isNotEmpty(),
+            canSend = canSend,
             onPickMedia = onPickMedia,
-            onSend = {
-                if (text.isNotBlank() || selectedMedia.isNotEmpty()) {
-                    onSendMessage(text, selectedMedia.map { it.toString() })
-                    text = ""
-                    onClearMedia()
-                }
-            }
+            onSend = onSendMessage
         )
     }
 }
 
+/**
+ * Displays a horizontal row of selected media previews with a clear button.
+ * Stateless composable - receives all data via parameters.
+ */
 @Composable
 private fun MediaPreviewRow(
-    selectedMedia: List<Uri>,
+    selectedMediaUris: List<String>,
     onClearMedia: () -> Unit
 ) {
     Surface(
@@ -92,49 +99,75 @@ private fun MediaPreviewRow(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            selectedMedia.forEach { uri ->
-                Box(modifier = Modifier.size(70.dp)) {
-                    AsyncImage(
-                        model = uri,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .clip(RoundedCornerShape(12.dp)),
-                        contentScale = ContentScale.Crop
-                    )
-                }
+            selectedMediaUris.forEach { uri ->
+                MediaThumbnail(uri = uri)
             }
-            IconButton(
-                onClick = onClearMedia,
-                modifier = Modifier
-                    .background(MaterialTheme.colorScheme.errorContainer, CircleShape)
-                    .size(32.dp)
-            ) {
-                Icon(
-                    Icons.Default.Close,
-                    contentDescription = stringResource(R.string.clear_all),
-                    tint = MaterialTheme.colorScheme.onErrorContainer,
-                    modifier = Modifier.size(16.dp)
-                )
-            }
+            ClearMediaButton(onClick = onClearMedia)
         }
     }
 }
 
+/**
+ * Single media thumbnail preview.
+ */
+@Composable
+private fun MediaThumbnail(uri: String) {
+    Box(modifier = Modifier.size(70.dp)) {
+        AsyncImage(
+            model = uri,
+            contentDescription = null,
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(RoundedCornerShape(12.dp)),
+            contentScale = ContentScale.Crop
+        )
+    }
+}
+
+/**
+ * Button to clear all selected media.
+ */
+@Composable
+private fun ClearMediaButton(onClick: () -> Unit) {
+    IconButton(
+        onClick = onClick,
+        modifier = Modifier
+            .background(MaterialTheme.colorScheme.errorContainer, CircleShape)
+            .size(32.dp)
+    ) {
+        Icon(
+            Icons.Default.Close,
+            contentDescription = stringResource(R.string.clear_all),
+            tint = MaterialTheme.colorScheme.onErrorContainer,
+            modifier = Modifier.size(16.dp)
+        )
+    }
+}
+
+/**
+ * The main input surface containing text field, media button, and send button.
+ * Stateless composable - canSend is passed in as a parameter (derived in ViewModel).
+ */
 @Composable
 private fun InputFieldSurface(
     text: String,
     onTextChange: (String) -> Unit,
     hasSelectedMedia: Boolean,
+    canSend: Boolean,
     onPickMedia: () -> Unit,
     onSend: () -> Unit
 ) {
+    // Compute shape only when hasSelectedMedia changes
+    val surfaceShape = remember(hasSelectedMedia) {
+        if (hasSelectedMedia)
+            RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)
+        else RoundedCornerShape(24.dp)
+    }
+    
     Surface(
         tonalElevation = 6.dp,
         shadowElevation = 8.dp,
-        shape = if (hasSelectedMedia)
-            RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)
-        else RoundedCornerShape(24.dp),
+        shape = surfaceShape,
         color = MaterialTheme.colorScheme.surface,
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -145,57 +178,96 @@ private fun InputFieldSurface(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Add media button
-            IconButton(onClick = onPickMedia) {
-                Icon(
-                    Icons.Default.Add,
-                    contentDescription = stringResource(R.string.add_media),
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(28.dp)
-                )
-            }
+            AddMediaButton(onClick = onPickMedia)
 
             // Text input
-            TextField(
-                value = text,
-                onValueChange = onTextChange,
-                modifier = Modifier.weight(1f),
-                placeholder = {
-                    Text(
-                        stringResource(R.string.type_a_message),
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                },
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    disabledContainerColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                ),
-                maxLines = 6,
-                textStyle = MaterialTheme.typography.bodyLarge
+            MessageTextField(
+                text = text,
+                onTextChange = onTextChange,
+                modifier = Modifier.weight(1f)
             )
 
             // Send button
-            val canSend = text.isNotBlank() || hasSelectedMedia
-            IconButton(
-                onClick = onSend,
-                modifier = Modifier
-                    .padding(4.dp)
-                    .background(
-                        if (canSend) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
-                        CircleShape
-                    )
-                    .size(40.dp)
-            ) {
-                Icon(
-                    Icons.Default.Send,
-                    contentDescription = stringResource(R.string.send),
-                    tint = Color.White,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
+            SendButton(
+                canSend = canSend,
+                onClick = onSend
+            )
         }
+    }
+}
+
+/**
+ * Button to add media attachments.
+ */
+@Composable
+private fun AddMediaButton(onClick: () -> Unit) {
+    IconButton(onClick = onClick) {
+        Icon(
+            Icons.Default.Add,
+            contentDescription = stringResource(R.string.add_media),
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(28.dp)
+        )
+    }
+}
+
+/**
+ * Text input field for message content.
+ */
+@Composable
+private fun MessageTextField(
+    text: String,
+    onTextChange: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    TextField(
+        value = text,
+        onValueChange = onTextChange,
+        modifier = modifier,
+        placeholder = {
+            Text(
+                stringResource(R.string.type_a_message),
+                style = MaterialTheme.typography.bodyLarge
+            )
+        },
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = Color.Transparent,
+            unfocusedContainerColor = Color.Transparent,
+            disabledContainerColor = Color.Transparent,
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
+        ),
+        maxLines = 6,
+        textStyle = MaterialTheme.typography.bodyLarge
+    )
+}
+
+/**
+ * Send message button with enabled/disabled state.
+ */
+@Composable
+private fun SendButton(
+    canSend: Boolean,
+    onClick: () -> Unit
+) {
+    // Compute background color only when canSend changes
+    val backgroundColor = MaterialTheme.colorScheme.primary.let { primary ->
+        if (canSend) primary else primary.copy(alpha = 0.3f)
+    }
+    
+    IconButton(
+        onClick = onClick,
+        enabled = canSend,
+        modifier = Modifier
+            .padding(4.dp)
+            .background(backgroundColor, CircleShape)
+            .size(40.dp)
+    ) {
+        Icon(
+            Icons.Default.Send,
+            contentDescription = stringResource(R.string.send),
+            tint = Color.White,
+            modifier = Modifier.size(20.dp)
+        )
     }
 }

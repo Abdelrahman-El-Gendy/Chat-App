@@ -25,21 +25,40 @@ import com.example.chatapp.feature.chat_room.R
 import java.text.SimpleDateFormat
 import java.util.*
 
-@OptIn(ExperimentalFoundationApi::class)
+/**
+ * Message item composable - displays a single chat message.
+ * 
+ * The showMenu state is local (UI-only) since it doesn't need to survive configuration changes.
+ * All other state is hoisted to prevent unnecessary recompositions.
+ * 
+ * @param message The message data to display
+ * @param isOwnMessage Whether this message belongs to the current user
+ * @param onDelete Callback when delete action is triggered
+ * @param onRetry Callback when retry action is triggered (for failed messages)
+ */
 @Composable
 fun MessageItem(
     message: Message,
     isOwnMessage: Boolean,
     onDelete: (String) -> Unit,
-    onRetry: (Message) -> Unit = {}
+    onRetry: (Message) -> Unit
 ) {
+    // Local UI-only state for dropdown menu
     var showMenu by remember { mutableStateOf(false) }
+    
+    // Precompute alignment to avoid recalculation during recomposition
+    val horizontalArrangement = remember(isOwnMessage) {
+        if (isOwnMessage) Arrangement.End else Arrangement.Start
+    }
+    val columnAlignment = remember(isOwnMessage) {
+        if (isOwnMessage) Alignment.End else Alignment.Start
+    }
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 6.dp),
-        horizontalArrangement = if (isOwnMessage) Arrangement.End else Arrangement.Start,
+        horizontalArrangement = horizontalArrangement,
         verticalAlignment = Alignment.Bottom
     ) {
         // Avatar for other users
@@ -48,7 +67,7 @@ fun MessageItem(
             Spacer(modifier = Modifier.width(8.dp))
         }
 
-        Column(horizontalAlignment = if (isOwnMessage) Alignment.End else Alignment.Start) {
+        Column(horizontalAlignment = columnAlignment) {
             Box {
                 MessageBubble(
                     message = message,
@@ -57,35 +76,59 @@ fun MessageItem(
                 )
 
                 // Context menu
-                DropdownMenu(
+                MessageContextMenu(
                     expanded = showMenu,
-                    onDismissRequest = { showMenu = false }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.delete)) },
-                        onClick = {
-                            onDelete(message.id)
-                            showMenu = false
-                        }
-                    )
-                }
+                    onDismiss = { showMenu = false },
+                    onDelete = { onDelete(message.id) }
+                )
             }
 
             // Retry button for failed messages
             if (isOwnMessage && message.status == MessageStatus.FAILED) {
-                TextButton(
-                    onClick = { onRetry(message) },
-                    contentPadding = PaddingValues(0.dp),
-                    modifier = Modifier.height(32.dp)
-                ) {
-                    Text(
-                        stringResource(R.string.retry),
-                        color = Color.Red,
-                        style = MaterialTheme.typography.labelMedium
-                    )
-                }
+                RetryButton(onClick = { onRetry(message) })
             }
         }
+    }
+}
+
+/**
+ * Context menu for message actions (delete).
+ */
+@Composable
+private fun MessageContextMenu(
+    expanded: Boolean,
+    onDismiss: () -> Unit,
+    onDelete: () -> Unit
+) {
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = onDismiss
+    ) {
+        DropdownMenuItem(
+            text = { Text(stringResource(R.string.delete)) },
+            onClick = {
+                onDelete()
+                onDismiss()
+            }
+        )
+    }
+}
+
+/**
+ * Retry button for failed messages.
+ */
+@Composable
+private fun RetryButton(onClick: () -> Unit) {
+    TextButton(
+        onClick = onClick,
+        contentPadding = PaddingValues(0.dp),
+        modifier = Modifier.height(32.dp)
+    ) {
+        Text(
+            stringResource(R.string.retry),
+            color = Color.Red,
+            style = MaterialTheme.typography.labelMedium
+        )
     }
 }
 
@@ -169,11 +212,32 @@ private fun MediaGallery(mediaUrls: List<String>) {
     }
 }
 
+/**
+ * Message footer showing timestamp and status.
+ * Uses remembered date formatter to avoid creating new instance on every recomposition.
+ */
 @Composable
 private fun MessageFooter(
     message: Message,
     isOwnMessage: Boolean
 ) {
+    // Remember the date formatter to avoid recreation on each recomposition
+    val dateFormatter = remember {
+        SimpleDateFormat("HH:mm", Locale.getDefault())
+    }
+    
+    // Compute formatted time only when timestamp changes
+    val formattedTime = remember(message.timestamp) {
+        dateFormatter.format(Date(message.timestamp))
+    }
+    
+    // Precompute colors to avoid recalculation
+    val timestampColor = if (isOwnMessage) {
+        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f)
+    } else {
+        Color.Gray
+    }
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.End,
@@ -181,30 +245,43 @@ private fun MessageFooter(
     ) {
         // Timestamp
         Text(
-            text = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(message.timestamp)),
+            text = formattedTime,
             style = MaterialTheme.typography.labelSmall,
-            color = if (isOwnMessage) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f)
-            else Color.Gray,
+            color = timestampColor,
             fontSize = 10.sp
         )
 
         // Status indicator (for own messages)
         if (isOwnMessage) {
             Spacer(modifier = Modifier.width(4.dp))
-            Text(
-                text = when (message.status) {
-                    MessageStatus.SENDING -> "..."
-                    MessageStatus.SENT -> "✓"
-                    MessageStatus.FAILED -> "⚠"
-                },
-                style = MaterialTheme.typography.labelSmall,
-                color = when {
-                    message.status == MessageStatus.FAILED -> Color.Red
-                    isOwnMessage -> MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f)
-                    else -> Color.Gray
-                },
-                fontSize = 11.sp
+            MessageStatusIndicator(
+                status = message.status,
+                defaultColor = timestampColor
             )
         }
     }
+}
+
+/**
+ * Status indicator icon for message delivery status.
+ */
+@Composable
+private fun MessageStatusIndicator(
+    status: MessageStatus,
+    defaultColor: Color
+) {
+    val (statusText, statusColor) = remember(status) {
+        when (status) {
+            MessageStatus.SENDING -> "..." to defaultColor
+            MessageStatus.SENT -> "✓" to defaultColor
+            MessageStatus.FAILED -> "⚠" to Color.Red
+        }
+    }
+    
+    Text(
+        text = statusText,
+        style = MaterialTheme.typography.labelSmall,
+        color = statusColor,
+        fontSize = 11.sp
+    )
 }

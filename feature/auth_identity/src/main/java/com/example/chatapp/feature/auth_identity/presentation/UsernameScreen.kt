@@ -22,6 +22,14 @@ import com.example.chatapp.feature.auth_identity.presentation.model.UsernameInte
 import com.example.chatapp.feature.auth_identity.presentation.model.UsernameState
 import kotlinx.coroutines.flow.collectLatest
 
+/**
+ * UsernameScreen - Container composable that handles side effects and delegates to stateless content.
+ * 
+ * This follows the state hoisting pattern where:
+ * - State is collected from ViewModel
+ * - Side effects (navigation) are handled via LaunchedEffect
+ * - All rendering is delegated to stateless UsernameScreenContent
+ */
 @Composable
 fun UsernameScreen(
     viewModel: UsernameViewModel,
@@ -29,20 +37,13 @@ fun UsernameScreen(
 ) {
     val state by viewModel.state.collectAsState()
 
-    // Handle side effects
-    LaunchedEffect(Unit) {
-        viewModel.effect.collectLatest { effect ->
-            when (effect) {
-                is UsernameEffect.NavigateToChat -> {
-                    onUsernameSet()
-                }
-                is UsernameEffect.ShowError -> {
-                    // Could show snackbar here
-                }
-            }
-        }
-    }
+    // Side effect handler - isolated from composition
+    UsernameScreenEffectHandler(
+        effectFlow = viewModel.effect,
+        onNavigateToChat = onUsernameSet
+    )
 
+    // Stateless content - pure UI rendering
     UsernameScreenContent(
         state = state,
         onInputChange = { text ->
@@ -52,6 +53,27 @@ fun UsernameScreen(
             viewModel.onIntent(UsernameIntent.SubmitUsername(username))
         }
     )
+}
+
+/**
+ * Handles side effects from the ViewModel's effect channel.
+ * Isolated to prevent triggering unnecessary recompositions.
+ */
+@Composable
+private fun UsernameScreenEffectHandler(
+    effectFlow: kotlinx.coroutines.flow.Flow<UsernameEffect>,
+    onNavigateToChat: () -> Unit
+) {
+    LaunchedEffect(Unit) {
+        effectFlow.collectLatest { effect ->
+            when (effect) {
+                is UsernameEffect.NavigateToChat -> onNavigateToChat()
+                is UsernameEffect.ShowError -> {
+                    // Could integrate with snackbar here
+                }
+            }
+        }
+    }
 }
 
 @Composable

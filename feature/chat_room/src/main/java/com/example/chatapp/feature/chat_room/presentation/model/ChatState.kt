@@ -1,5 +1,6 @@
 package com.example.chatapp.feature.chat_room.presentation.model
 
+import androidx.compose.runtime.Immutable
 import com.example.chatapp.core.domain.model.Message
 import com.example.chatapp.core.ui.mvi.UiState
 
@@ -9,7 +10,10 @@ import com.example.chatapp.core.ui.mvi.UiState
  * Contains all data needed to render the chat interface.
  * This is an immutable data class that represents the complete
  * state of the chat screen at any given moment.
+ * 
+ * @Immutable annotation helps Compose skip recomposition when state hasn't changed.
  */
+@Immutable
 data class ChatState(
     /**
      * List of messages in the chat
@@ -49,7 +53,22 @@ data class ChatState(
     /**
      * List of users currently typing (excluding current user)
      */
-    val typingUsers: List<String> = emptyList()
+    val typingUsers: List<String> = emptyList(),
+    
+    /**
+     * Current message input text (hoisted from MessageInputField)
+     */
+    val messageInputText: String = "",
+    
+    /**
+     * Currently selected media URIs (hoisted from UI)
+     */
+    val selectedMediaUris: List<String> = emptyList(),
+    
+    /**
+     * Whether the user is currently typing
+     */
+    val isUserTyping: Boolean = false
 ) : UiState {
     
     /**
@@ -63,4 +82,10 @@ data class ChatState(
      */
     val hasError: Boolean
         get() = error != null
+    
+    /**
+     * Check if send button should be enabled
+     */
+    val canSendMessage: Boolean
+        get() = messageInputText.isNotBlank() || selectedMediaUris.isNotEmpty()
 }
