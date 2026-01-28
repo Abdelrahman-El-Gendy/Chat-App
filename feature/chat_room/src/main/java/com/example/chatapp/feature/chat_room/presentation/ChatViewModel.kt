@@ -44,13 +44,45 @@ class ChatViewModel @Inject constructor(
 
     override suspend fun handleIntent(intent: ChatIntent) {
         when (intent) {
-            is ChatIntent.SendMessage -> sendMessage(intent.text, intent.mediaUris)
+            is ChatIntent.UpdateMessageInput -> updateMessageInput(intent.text)
+            is ChatIntent.UpdateSelectedMedia -> updateSelectedMedia(intent.uris)
+            is ChatIntent.ClearSelectedMedia -> setState { copy(selectedMediaUris = emptyList()) }
+            is ChatIntent.SendMessage -> sendCurrentMessage()
             is ChatIntent.DeleteMessage -> deleteMessage(intent.messageId)
             is ChatIntent.RetryMessage -> retryMessage(intent.message)
             is ChatIntent.LoadMoreMessages -> loadMoreMessages()
             is ChatIntent.SetTyping -> setTyping(intent.isTyping)
             is ChatIntent.ClearError -> setState { copy(error = null) }
         }
+    }
+    
+    private fun updateMessageInput(text: String) {
+        setState { copy(messageInputText = text) }
+        // Update typing status based on input
+        val isTyping = text.isNotBlank()
+        if (isTyping != currentState.isUserTyping) {
+            setState { copy(isUserTyping = isTyping) }
+            viewModelScope.launch {
+                setTyping(isTyping)
+            }
+        }
+    }
+    
+    private fun updateSelectedMedia(uris: List<String>) {
+        setState { copy(selectedMediaUris = uris) }
+    }
+    
+    private suspend fun sendCurrentMessage() {
+        val text = currentState.messageInputText.takeIf { it.isNotBlank() }
+        val mediaUris = currentState.selectedMediaUris.takeIf { it.isNotEmpty() }
+        
+        if (text == null && mediaUris == null) return
+        
+        // Clear input immediately for better UX
+        setState { copy(messageInputText = "", selectedMediaUris = emptyList(), isUserTyping = false) }
+        setTyping(false)
+        
+        sendMessage(text, mediaUris)
     }
 
     private fun observeUserInfo() {

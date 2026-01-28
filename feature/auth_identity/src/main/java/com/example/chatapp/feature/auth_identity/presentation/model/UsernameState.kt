@@ -1,12 +1,16 @@
 package com.example.chatapp.feature.auth_identity.presentation.model
 
+import androidx.compose.runtime.Immutable
 import com.example.chatapp.core.ui.mvi.UiState
 
 /**
  * UI State for Username Screen.
  * 
  * Contains all data needed to render the username input interface.
+ * 
+ * @Immutable annotation helps Compose skip recomposition when state hasn't changed.
  */
+@Immutable
 data class UsernameState(
     /**
      * The saved username (empty if not yet set)
