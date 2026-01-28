@@ -1,5 +1,9 @@
 # Project exclude paths
 /.gradle/
+
+# IDE files
+.idea/
+.vscode/
 /app/build/
 /app/build/intermediates/javac/debug/classes/
 /build/
