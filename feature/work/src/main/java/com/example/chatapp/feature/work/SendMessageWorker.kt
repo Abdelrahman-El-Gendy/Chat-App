@@ -27,12 +27,18 @@ class SendMessageWorker @AssistedInject constructor(
         val text = inputData.getString("text")
         val senderId = inputData.getString("sender_id") ?: return Result.failure()
         val senderName = inputData.getString("sender_name") ?: return Result.failure()
+        val timestamp = inputData.getLong("timestamp", System.currentTimeMillis())
         
         // Receive from previous worker if chained (uploaded_urls), or from direct input (media_urls)
         val mediaUrls = inputData.getStringArray("uploaded_urls")?.toList() 
             ?: inputData.getStringArray("media_urls")?.toList()
 
-        setForeground(createForegroundInfo())
+        try {
+            setForeground(createForegroundInfo())
+        } catch (e: Exception) {
+            // Foreground service may fail on some devices, continue anyway
+            android.util.Log.w("SendMessageWorker", "Failed to set foreground: ${e.message}")
+        }
 
         return try {
             val message = Message(
@@ -41,20 +47,28 @@ class SendMessageWorker @AssistedInject constructor(
                 mediaUrls = mediaUrls,
                 senderId = senderId,
                 senderName = senderName,
+                timestamp = timestamp,
                 status = MessageStatus.SENT
             )
             repository.sendMessage(message)
+            android.util.Log.d("SendMessageWorker", "Message sent successfully: $messageId")
             Result.success()
         } catch (e: Exception) {
+            android.util.Log.e("SendMessageWorker", "Failed to send message: ${e.message}")
             if (runAttemptCount >= 3) {
-                repository.sendMessage(Message(
-                    id = messageId,
-                    text = text,
-                    mediaUrls = mediaUrls,
-                    senderId = senderId,
-                    senderName = senderName,
-                    status = MessageStatus.FAILED
-                ))
+                try {
+                    repository.sendMessage(Message(
+                        id = messageId,
+                        text = text,
+                        mediaUrls = mediaUrls,
+                        senderId = senderId,
+                        senderName = senderName,
+                        timestamp = timestamp,
+                        status = MessageStatus.FAILED
+                    ))
+                } catch (updateError: Exception) {
+                    android.util.Log.e("SendMessageWorker", "Failed to update status to FAILED: ${updateError.message}")
+                }
                 Result.failure()
             } else {
                 Result.retry()

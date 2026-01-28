@@ -15,7 +15,8 @@ class WorkSchedulerImpl @Inject constructor(
         text: String?,
         mediaUris: List<String>?,
         senderId: String,
-        senderName: String
+        senderName: String,
+        timestamp: Long
     ) {
         val workManager = WorkManager.getInstance(context)
         
@@ -29,7 +30,8 @@ class WorkSchedulerImpl @Inject constructor(
                     "message_id" to messageId,
                     "text" to text,
                     "sender_id" to senderId,
-                    "sender_name" to senderName
+                    "sender_name" to senderName,
+                    "timestamp" to timestamp
                 ))
                 .build()
                 
@@ -40,7 +42,8 @@ class WorkSchedulerImpl @Inject constructor(
                     "message_id" to messageId,
                     "text" to text,
                     "sender_id" to senderId,
-                    "sender_name" to senderName
+                    "sender_name" to senderName,
+                    "timestamp" to timestamp
                 ))
                 .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
                 .build()

@@ -34,6 +34,11 @@
     <string name="upload_progress">جارٍ رفع %1$d من %2$d</string>
     <string name="chat_notifications">إشعارات الدردشة</string>
     <string name="media_uploads">رفع الوسائط</string>
+    <string name="notification_reply">رد</string>
+    <string name="notification_mark_read">تحديد كمقروء</string>
+    <string name="notification_new_message">رسالة جديدة من %s</string>
+    <string name="notification_sent_photo">أرسل صورة</string>
+    <string name="notification_sent_photos">أرسل %d صور</string>
     
     <!-- Errors -->
     <string name="error_send_failed">فشل في إرسال الرسالة</string>

@@ -222,8 +222,9 @@ private fun MessageFooter(
     isOwnMessage: Boolean
 ) {
     // Remember the date formatter to avoid recreation on each recomposition
+    // Using 12-hour format with AM/PM
     val dateFormatter = remember {
-        SimpleDateFormat("HH:mm", Locale.getDefault())
+        SimpleDateFormat("hh:mm a", Locale.getDefault())
     }
     
     // Compute formatted time only when timestamp changes

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="notification_summary">
+        <item quantity="one">%1$d message from %2$d conversation</item>
+        <item quantity="other">%1$d messages from %2$d conversations</item>
+    </plurals>
+    
+    <plurals name="notification_badge">
+        <item quantity="one">%d new message</item>
+        <item quantity="other">%d new messages</item>
+    </plurals>
+</resources>
