@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Username Screen -->
+    <string name="join_the_chat">Join the Chat</string>
+    <string name="username_description">Pick a unique name to identify yourself in the global chatroom.</string>
+    <string name="username_placeholder">e.g. JohnDoe</string>
+    <string name="username_error">Username must be 3–20 characters</string>
+    <string name="get_started">Get Started</string>
+</resources>

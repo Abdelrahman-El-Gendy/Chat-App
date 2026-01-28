@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App -->
+    <string name="app_name">تطبيق الدردشة</string>
+    
+    <!-- Username Screen -->
+    <string name="welcome_emoji">👋</string>
+    <string name="join_the_chat">انضم إلى الدردشة</string>
+    <string name="username_description">اختر اسمًا فريدًا لتعريف نفسك في غرفة الدردشة العامة.</string>
+    <string name="username_placeholder">مثال: أحمد</string>
+    <string name="username_error">يجب أن يكون الاسم من 3 إلى 20 حرفًا</string>
+    <string name="get_started">ابدأ الآن</string>
+    
+    <!-- Chat Screen -->
+    <string name="chat_title">الدردشة</string>
+    <string name="online">متصل</string>
+    <string name="typing_indicator">%s يكتب…</string>
+    <string name="type_a_message">اكتب رسالة…</string>
+    <string name="send">إرسال</string>
+    <string name="add_media">إضافة وسائط</string>
+    <string name="clear_all">مسح الكل</string>
+    <string name="back">رجوع</string>
+    
+    <!-- Message Status -->
+    <string name="status_sending">جارٍ الإرسال</string>
+    <string name="status_sent">تم الإرسال</string>
+    <string name="status_failed">فشل الإرسال</string>
+    <string name="retry">إعادة المحاولة</string>
+    <string name="delete">حذف</string>
+    
+    <!-- Notifications -->
+    <string name="sending_message">جارٍ إرسال الرسالة…</string>
+    <string name="uploading_media">جارٍ رفع الوسائط…</string>
+    <string name="upload_progress">جارٍ رفع %1$d من %2$d</string>
+    <string name="chat_notifications">إشعارات الدردشة</string>
+    <string name="media_uploads">رفع الوسائط</string>
+    
+    <!-- Errors -->
+    <string name="error_send_failed">فشل في إرسال الرسالة</string>
+    <string name="error_network">خطأ في الشبكة. يرجى المحاولة مرة أخرى.</string>
+</resources>

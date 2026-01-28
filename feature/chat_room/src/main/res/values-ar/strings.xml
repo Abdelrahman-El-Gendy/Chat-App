@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Chat Screen -->
+    <string name="chat_title">الدردشة</string>
+    <string name="online">متصل</string>
+    <string name="typing_indicator">%s يكتب…</string>
+    <string name="type_a_message">اكتب رسالة…</string>
+    <string name="send">إرسال</string>
+    <string name="add_media">إضافة وسائط</string>
+    <string name="clear_all">مسح الكل</string>
+    <string name="back">رجوع</string>
+    
+    <!-- Message Status -->
+    <string name="retry">إعادة المحاولة</string>
+    <string name="delete">حذف</string>
+</resources>

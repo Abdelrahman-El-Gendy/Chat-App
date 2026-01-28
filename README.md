@@ -48,8 +48,7 @@ The project follows a modular structure to separate concerns and improve build t
 │   └── ui/               # Shared UI components, Theme, Design System
 ├── feature/
 │   ├── auth_identity/    # Authentication screens and logic
-│   ├── chat_room/        # Main chat screen, message list, input handling
-│   ├── media/            # Media selection and preview logic
+│   ├── chat_room/        # Main chat screen, message list, media picking
 │   └── work/             # Background workers for uploading/sending
 ```
 
@@ -103,12 +102,39 @@ This app is designed to be a "good citizen" on the Android platform:
 
 ---
 
+## 🧪 Testing
+
+The project includes comprehensive test coverage:
+
+```bash
+# Run unit tests
+./gradlew test
+
+# Run instrumentation tests
+./gradlew connectedAndroidTest
+```
+
+| Module | Test Coverage |
+|--------|---------------|
+| `core:domain` | Use Case tests |
+| `core:data` | Repository tests |
+| `feature:work` | Worker tests |
+| `feature:chat_room` | ViewModel + UI tests |
+
+---
+
 ## 🤝 Contribution
 
-Contributions are welcome! Please fork the repository and submit a pull request.
+Contributions are welcome! This project follows **Git Flow** workflow.
 
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines on:
+- Branch naming conventions
+- Commit message format
+- Code review process
+
+Quick start:
 1.  Fork the Project
-2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3.  Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+2.  Create your Feature Branch from `develop` (`git checkout -b feature/AmazingFeature`)
+3.  Commit your Changes (`git commit -m 'feat: add amazing feature'`)
 4.  Push to the Branch (`git push origin feature/AmazingFeature`)
-5.  Open a Pull Request
+5.  Open a Pull Request to `develop`

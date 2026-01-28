@@ -1,3 +1,40 @@
 <resources>
+    <!-- App -->
     <string name="app_name">Chat App</string>
+    
+    <!-- Username Screen -->
+    <string name="welcome_emoji">👋</string>
+    <string name="join_the_chat">Join the Chat</string>
+    <string name="username_description">Pick a unique name to identify yourself in the global chatroom.</string>
+    <string name="username_placeholder">e.g. JohnDoe</string>
+    <string name="username_error">Username must be 3–20 characters</string>
+    <string name="get_started">Get Started</string>
+    
+    <!-- Chat Screen -->
+    <string name="chat_title">Chat</string>
+    <string name="online">Online</string>
+    <string name="typing_indicator">%s is typing…</string>
+    <string name="type_a_message">Type a message…</string>
+    <string name="send">Send</string>
+    <string name="add_media">Add media</string>
+    <string name="clear_all">Clear all</string>
+    <string name="back">Back</string>
+    
+    <!-- Message Status -->
+    <string name="status_sending">Sending</string>
+    <string name="status_sent">Sent</string>
+    <string name="status_failed">Failed</string>
+    <string name="retry">Retry</string>
+    <string name="delete">Delete</string>
+    
+    <!-- Notifications -->
+    <string name="sending_message">Sending message…</string>
+    <string name="uploading_media">Uploading media…</string>
+    <string name="upload_progress">Uploading %1$d of %2$d</string>
+    <string name="chat_notifications">Chat Notifications</string>
+    <string name="media_uploads">Media Uploads</string>
+    
+    <!-- Errors -->
+    <string name="error_send_failed">Failed to send message</string>
+    <string name="error_network">Network error. Please try again.</string>
 </resources>

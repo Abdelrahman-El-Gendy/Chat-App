@@ -43,4 +43,10 @@ dependencies {
     
     implementation(libs.kotlinx.coroutines.play.services)
     implementation(libs.javax.inject)
+    
+    // Testing
+    testImplementation(libs.junit)
+    testImplementation(libs.mockk)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.turbine)
 }

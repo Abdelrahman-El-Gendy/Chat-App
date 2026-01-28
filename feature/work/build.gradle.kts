@@ -40,4 +40,12 @@ dependencies {
     kapt(libs.hilt.compiler)
     implementation(libs.androidx.hilt.work)
     kapt(libs.androidx.hilt.compiler)
+    
+    // Testing
+    testImplementation(libs.junit)
+    testImplementation(libs.mockk)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.work.testing)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.work.testing)
 }

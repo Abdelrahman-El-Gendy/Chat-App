@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Username Screen -->
+    <string name="join_the_chat">انضم إلى الدردشة</string>
+    <string name="username_description">اختر اسمًا فريدًا لتعريف نفسك في غرفة الدردشة العامة.</string>
+    <string name="username_placeholder">مثال: أحمد</string>
+    <string name="username_error">يجب أن يكون الاسم من 3 إلى 20 حرفًا</string>
+    <string name="get_started">ابدأ الآن</string>
+</resources>

@@ -1,5 +1,9 @@
-package com.example.chatapp.feature.chat_room
+package com.example.chatapp.feature.chat_room.presentation
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -13,13 +17,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
-import android.net.Uri
 import com.example.chatapp.core.ui.component.UserAvatar
+import com.example.chatapp.feature.chat_room.R
+import com.example.chatapp.feature.chat_room.presentation.components.MessageInputField
+import com.example.chatapp.feature.chat_room.presentation.components.MessageItem
+import com.example.chatapp.feature.chat_room.presentation.model.ChatEffect
+import com.example.chatapp.feature.chat_room.presentation.model.ChatIntent
+import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,9 +33,32 @@ fun ChatScreen(
     viewModel: ChatViewModel,
     onBack: () -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val state by viewModel.state.collectAsState()
     val listState = rememberLazyListState()
     val selectedMedia = remember { mutableStateListOf<Uri>() }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Handle side effects
+    LaunchedEffect(Unit) {
+        viewModel.effect.collectLatest { effect ->
+            when (effect) {
+                is ChatEffect.ShowError -> {
+                    snackbarHostState.showSnackbar(effect.message)
+                }
+                is ChatEffect.ScrollToBottom -> {
+                    if (state.messages.isNotEmpty()) {
+                        listState.animateScrollToItem(state.messages.size - 1)
+                    }
+                }
+                is ChatEffect.ShowToast -> {
+                    snackbarHostState.showSnackbar(effect.message)
+                }
+                is ChatEffect.NavigateBack -> {
+                    onBack()
+                }
+            }
+        }
+    }
 
     val mediaPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickMultipleVisualMedia(),
@@ -43,30 +72,34 @@ fun ChatScreen(
     LaunchedEffect(listState) {
         snapshotFlow { listState.firstVisibleItemIndex }
             .collect { index ->
-                if (index == 0 && uiState.messages.isNotEmpty() && !uiState.isPaginatedLoading) {
-                    viewModel.loadMoreMessages()
+                if (index == 0 && state.messages.isNotEmpty() && !state.isPaginatedLoading) {
+                    viewModel.onIntent(ChatIntent.LoadMoreMessages)
                 }
             }
     }
 
     // Scroll to bottom on new messages
-    LaunchedEffect(uiState.messages.size) {
-        if (uiState.messages.isNotEmpty()) {
-            listState.animateScrollToItem(uiState.messages.size - 1)
+    LaunchedEffect(state.messages.size) {
+        if (state.messages.isNotEmpty()) {
+            listState.animateScrollToItem(state.messages.size - 1)
         }
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        UserAvatar(username = "Chat", modifier = Modifier.size(32.dp))
+                        UserAvatar(username = state.currentUserName, modifier = Modifier.size(32.dp))
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
-                            Text(text = "Global Chat", style = MaterialTheme.typography.titleMedium)
                             Text(
-                                text = "Active", 
+                                text = state.currentUserName.ifEmpty { stringResource(R.string.chat_title) },
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                text = stringResource(R.string.online),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = Color(0xFF4CAF50)
                             )
@@ -75,7 +108,7 @@ fun ChatScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = null)
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -86,9 +119,9 @@ fun ChatScreen(
         },
         bottomBar = {
             Column(modifier = Modifier.background(MaterialTheme.colorScheme.background)) {
-                if (uiState.typingUsers.isNotEmpty()) {
+                if (state.typingUsers.isNotEmpty()) {
                     Text(
-                        text = "${uiState.typingUsers.joinToString(", ")} is typing...",
+                        text = stringResource(R.string.typing_indicator, state.typingUsers.joinToString(", ")),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier
@@ -97,8 +130,8 @@ fun ChatScreen(
                     )
                 }
                 MessageInputField(
-                    onSendMessage = { text, uris -> 
-                        viewModel.sendMessage(text, uris)
+                    onSendMessage = { text, uris ->
+                        viewModel.onIntent(ChatIntent.SendMessage(text, uris))
                     },
                     onPickMedia = {
                         mediaPickerLauncher.launch(
@@ -107,7 +140,9 @@ fun ChatScreen(
                     },
                     selectedMedia = selectedMedia,
                     onClearMedia = { selectedMedia.clear() },
-                    onTyping = viewModel::setTyping
+                    onTyping = { isTyping ->
+                        viewModel.onIntent(ChatIntent.SetTyping(isTyping))
+                    }
                 )
             }
         },
@@ -123,7 +158,7 @@ fun ChatScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(top = 8.dp, bottom = 12.dp)
             ) {
-                if (uiState.isPaginatedLoading) {
+                if (state.isPaginatedLoading) {
                     item {
                         CircularProgressIndicator(
                             modifier = Modifier
@@ -134,20 +169,21 @@ fun ChatScreen(
                     }
                 }
 
-                items(uiState.messages, key = { it.id }) { message ->
+                items(state.messages, key = { it.id }) { message ->
                     MessageItem(
                         message = message,
-                        isOwnMessage = message.senderId == uiState.currentUser,
-                        onDelete = viewModel::deleteMessage,
-                        onRetry = { msg -> 
-                            viewModel.deleteMessage(msg.id)
-                            viewModel.sendMessage(msg.text, msg.mediaUrls) 
+                        isOwnMessage = message.senderId == state.currentUserId,
+                        onDelete = { messageId ->
+                            viewModel.onIntent(ChatIntent.DeleteMessage(messageId))
+                        },
+                        onRetry = { msg ->
+                            viewModel.onIntent(ChatIntent.RetryMessage(msg))
                         }
                     )
                 }
             }
 
-            if (uiState.isLoading) {
+            if (state.isLoading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             }
         }

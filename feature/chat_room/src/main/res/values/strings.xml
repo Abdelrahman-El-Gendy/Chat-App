@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Chat Screen -->
+    <string name="chat_title">Chat</string>
+    <string name="online">Online</string>
+    <string name="typing_indicator">%s is typing…</string>
+    <string name="type_a_message">Type a message…</string>
+    <string name="send">Send</string>
+    <string name="add_media">Add media</string>
+    <string name="clear_all">Clear all</string>
+    <string name="back">Back</string>
+    
+    <!-- Message Status -->
+    <string name="retry">Retry</string>
+    <string name="delete">Delete</string>
+</resources>
