@@ -6,6 +6,7 @@ interface IWorkScheduler {
         text: String?,
         mediaUris: List<String>?,
         senderId: String,
-        senderName: String
+        senderName: String,
+        timestamp: Long
     )
 }

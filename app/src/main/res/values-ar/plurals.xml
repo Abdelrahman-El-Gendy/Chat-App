@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="notification_summary">
+        <item quantity="zero">لا توجد رسائل</item>
+        <item quantity="one">رسالة واحدة من محادثة واحدة</item>
+        <item quantity="two">رسالتان من %2$d محادثات</item>
+        <item quantity="few">%1$d رسائل من %2$d محادثات</item>
+        <item quantity="many">%1$d رسالة من %2$d محادثة</item>
+        <item quantity="other">%1$d رسالة من %2$d محادثة</item>
+    </plurals>
+    
+    <plurals name="notification_badge">
+        <item quantity="zero">لا توجد رسائل جديدة</item>
+        <item quantity="one">رسالة جديدة واحدة</item>
+        <item quantity="two">رسالتان جديدتان</item>
+        <item quantity="few">%d رسائل جديدة</item>
+        <item quantity="many">%d رسالة جديدة</item>
+        <item quantity="other">%d رسالة جديدة</item>
+    </plurals>
+</resources>

@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 import com.example.chatapp.core.domain.repository.IWorkScheduler
+import androidx.core.net.toUri
 
 class MessageRepository @Inject constructor(
     private val firebaseService: FirebaseMessageService,
@@ -26,27 +27,29 @@ class MessageRepository @Inject constructor(
     override suspend fun queueMessage(text: String?, mediaUris: List<String>?, senderId: String, senderName: String) {
         val finalMediaUris = if (!mediaUris.isNullOrEmpty()) {
             mediaUris.mapNotNull { uriString ->
-                contentUriCopier.copyToInternalStorage(android.net.Uri.parse(uriString))?.toString()
+                contentUriCopier.copyToInternalStorage(uriString.toUri())?.toString()
             }
         } else {
             mediaUris
         }
 
         val messageId = java.util.UUID.randomUUID().toString()
+        val timestamp = System.currentTimeMillis()
         val initialMessage = Message(
             id = messageId,
             text = text,
             mediaUrls = finalMediaUris,
             senderId = senderId,
             senderName = senderName,
+            timestamp = timestamp,
             status = com.example.chatapp.core.domain.model.MessageStatus.SENDING
         )
         
-        // Use a coroutine or just a fire-and-forget to insert initial state
-        // Since we are in a non-suspend function, we might need a scope or just call a non-suspend firebase method
+        // Send initial message with SENDING status for immediate UI feedback
         firebaseService.sendMessageNonSuspend(initialMessage)
         
-        workScheduler.scheduleMessageSend(messageId, text, finalMediaUris, senderId, senderName)
+        // Schedule worker to update status to SENT after successful delivery
+        workScheduler.scheduleMessageSend(messageId, text, finalMediaUris, senderId, senderName, timestamp)
     }
 
     override suspend fun deleteMessage(messageId: String) {

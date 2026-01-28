@@ -33,6 +33,11 @@
     <string name="upload_progress">Uploading %1$d of %2$d</string>
     <string name="chat_notifications">Chat Notifications</string>
     <string name="media_uploads">Media Uploads</string>
+    <string name="notification_reply">Reply</string>
+    <string name="notification_mark_read">Mark as read</string>
+    <string name="notification_new_message">New message from %s</string>
+    <string name="notification_sent_photo">Sent a photo</string>
+    <string name="notification_sent_photos">Sent %d photos</string>
     
     <!-- Errors -->
     <string name="error_send_failed">Failed to send message</string>

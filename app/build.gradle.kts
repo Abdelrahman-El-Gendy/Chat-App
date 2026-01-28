@@ -62,6 +62,7 @@ dependencies {
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.process)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
@@ -71,6 +72,7 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.database.ktx)
     implementation(libs.firebase.storage.ktx)
+    implementation(libs.firebase.messaging.ktx)
     
     // Hilt wiring
     implementation(libs.hilt.android)

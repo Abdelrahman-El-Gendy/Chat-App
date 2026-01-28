@@ -1,7 +1,11 @@
 package com.example.chatapp.feature.work
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.Context
+import android.content.pm.ServiceInfo
 import android.net.Uri
+import androidx.core.app.NotificationCompat
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
@@ -12,6 +16,7 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.tasks.await
 import java.util.UUID
+import androidx.core.net.toUri
 
 @HiltWorker
 class UploadMediaWorker @AssistedInject constructor(
@@ -24,11 +29,16 @@ class UploadMediaWorker @AssistedInject constructor(
         val mediaUriStrings = inputData.getStringArray("media_uris") ?: return Result.failure()
         val uploadUrls = mutableListOf<String>()
 
+        /**
+         * Calling setForeground will throw an IllegalStateException if the process is subject to foreground service restrictions.
+         * Consider using WorkRequest.Builder.
+         * setExpedited and getForegroundInfo instead.
+         */
         setForeground(createForegroundInfo(0, mediaUriStrings.size))
 
         return try {
             mediaUriStrings.forEachIndexed { index, uriString ->
-                val uri = Uri.parse(uriString)
+                val uri = uriString.toUri()
                 if (uri.scheme == "http" || uri.scheme == "https") {
                     uploadUrls.add(uriString)
                 } else {
@@ -49,16 +59,16 @@ class UploadMediaWorker @AssistedInject constructor(
     private fun createForegroundInfo(current: Int, total: Int): ForegroundInfo {
         val channelId = "upload_notifications"
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            val channel = android.app.NotificationChannel(
+            val channel = NotificationChannel(
                 channelId,
                 "Media Uploads",
-                android.app.NotificationManager.IMPORTANCE_LOW
+                NotificationManager.IMPORTANCE_LOW
             )
-            val notificationManager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+            val notificationManager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
         }
 
-        val notification = androidx.core.app.NotificationCompat.Builder(applicationContext, channelId)
+        val notification = NotificationCompat.Builder(applicationContext, channelId)
             .setContentTitle("Uploading media...")
             .setContentText("Uploading $current of $total")
             .setSmallIcon(android.R.drawable.stat_sys_upload)
@@ -70,7 +80,7 @@ class UploadMediaWorker @AssistedInject constructor(
             return ForegroundInfo(
                 2,
                 notification,
-                android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
             )
         }
         return ForegroundInfo(2, notification)
