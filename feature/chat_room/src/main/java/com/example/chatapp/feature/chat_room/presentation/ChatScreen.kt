@@ -3,8 +3,15 @@ package com.example.chatapp.feature.chat_room.presentation
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -18,10 +25,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.example.chatapp.core.domain.model.Message
 import com.example.chatapp.core.ui.component.UserAvatar
 import com.example.chatapp.feature.chat_room.R
+import com.example.chatapp.feature.chat_room.presentation.components.EmptyState
 import com.example.chatapp.feature.chat_room.presentation.components.MessageInputField
 import com.example.chatapp.feature.chat_room.presentation.components.MessageItem
 import com.example.chatapp.feature.chat_room.presentation.model.ChatEffect
@@ -155,7 +165,7 @@ private fun PaginationEffect(
 }
 
 /**
- * Scrolls to bottom when new messages arrive.
+ * Scrolls to bottom when new messages arrive with smooth animation.
  */
 @Composable
 private fun ScrollToBottomEffect(
@@ -164,7 +174,10 @@ private fun ScrollToBottomEffect(
 ) {
     LaunchedEffect(messagesSize) {
         if (messagesSize > 0) {
-            listState.animateScrollToItem(messagesSize - 1)
+            listState.animateScrollToItem(
+                index = messagesSize - 1,
+                scrollOffset = 0
+            )
         }
     }
 }
@@ -246,14 +259,20 @@ private fun ChatTopBar(
                     Text(
                         text = stringResource(R.string.online),
                         style = MaterialTheme.typography.labelSmall,
-                        color = Color(0xFF4CAF50)
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
             }
         },
         navigationIcon = {
-            IconButton(onClick = onBack) {
-                Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.back))
+            IconButton(
+                onClick = onBack,
+                interactionSource = remember { MutableInteractionSource() },
+                modifier = Modifier.semantics {
+                    contentDescription = "Navigate back"
+                }
+            ) {
+                Icon(Icons.Default.ArrowBack, contentDescription = null)
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
@@ -278,8 +297,28 @@ private fun ChatBottomBar(
     onClearMedia: () -> Unit
 ) {
     Column(modifier = Modifier.background(MaterialTheme.colorScheme.background)) {
-        // Typing indicator
-        if (typingUsers.isNotEmpty()) {
+        // Typing indicator with fade-in animation
+        AnimatedVisibility(
+            visible = typingUsers.isNotEmpty(),
+            enter = fadeIn(
+                animationSpec = tween(
+                    durationMillis = 300
+                )
+            ) + expandVertically(
+                animationSpec = tween(
+                    durationMillis = 300
+                )
+            ),
+            exit = fadeOut(
+                animationSpec = tween(
+                    durationMillis = 300
+                )
+            ) + shrinkVertically(
+                animationSpec = tween(
+                    durationMillis = 300
+                )
+            )
+        ) {
             Text(
                 text = stringResource(R.string.typing_indicator, typingUsers.joinToString(", ")),
                 style = MaterialTheme.typography.labelSmall,
@@ -287,6 +326,9 @@ private fun ChatBottomBar(
                 modifier = Modifier
                     .padding(start = 16.dp, bottom = 4.dp)
                     .animateContentSize()
+                    .semantics {
+                        contentDescription = "${typingUsers.joinToString(", ")} is typing"
+                    }
             )
         }
         
@@ -322,37 +364,64 @@ private fun ChatMessagesList(
             .fillMaxSize()
             .padding(paddingValues)
     ) {
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(top = 8.dp, bottom = 12.dp)
-        ) {
-            if (isPaginatedLoading) {
-                item(key = "pagination_loader") {
-                    CircularProgressIndicator(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp)
-                            .wrapContentWidth(Alignment.CenterHorizontally)
+        // Show empty state when no messages and not loading
+        if (messages.isEmpty() && !isLoading) {
+            EmptyState(
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(top = 8.dp, bottom = 12.dp)
+            ) {
+                if (isPaginatedLoading) {
+                    item(key = "pagination_loader") {
+                        AnimatedVisibility(
+                            visible = true,
+                            enter = fadeIn(
+                                animationSpec = tween(durationMillis = 300)
+                            ),
+                            exit = fadeOut(
+                                animationSpec = tween(durationMillis = 300)
+                            )
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp)
+                                    .wrapContentWidth(Alignment.CenterHorizontally)
+                            )
+                        }
+                    }
+                }
+
+                items(
+                    items = messages,
+                    key = { it.id }
+                ) { message ->
+                    MessageItem(
+                        message = message,
+                        isOwnMessage = message.senderId == currentUserId,
+                        onDelete = onDeleteMessage,
+                        onRetry = onRetryMessage
                     )
                 }
             }
-
-            items(
-                items = messages,
-                key = { it.id }
-            ) { message ->
-                MessageItem(
-                    message = message,
-                    isOwnMessage = message.senderId == currentUserId,
-                    onDelete = onDeleteMessage,
-                    onRetry = onRetryMessage
-                )
-            }
         }
 
-        if (isLoading) {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+        // Main loading indicator with smooth fade
+        AnimatedVisibility(
+            visible = isLoading,
+            enter = fadeIn(
+                animationSpec = tween(durationMillis = 300)
+            ),
+            exit = fadeOut(
+                animationSpec = tween(durationMillis = 300)
+            ),
+            modifier = Modifier.align(Alignment.Center)
+        ) {
+            CircularProgressIndicator()
         }
     }
 }

@@ -1,19 +1,34 @@
 package com.example.chatapp.feature.chat_room.presentation.components
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -68,19 +83,43 @@ fun MessageItem(
         }
 
         Column(horizontalAlignment = columnAlignment) {
-            Box {
-                MessageBubble(
-                    message = message,
-                    isOwnMessage = isOwnMessage,
-                    onLongClick = { if (isOwnMessage) showMenu = true }
+            AnimatedVisibility(
+                visible = true,
+                enter = fadeIn(
+                    animationSpec = tween(
+                        durationMillis = 300
+                    )
+                ) + scaleIn(
+                    initialScale = 0.9f,
+                    animationSpec = tween(
+                        durationMillis = 300
+                    )
+                ),
+                exit = fadeOut(
+                    animationSpec = tween(
+                        durationMillis = 300
+                    )
+                ) + scaleOut(
+                    targetScale = 0.9f,
+                    animationSpec = tween(
+                        durationMillis = 300
+                    )
                 )
+            ) {
+                Box {
+                    MessageBubble(
+                        message = message,
+                        isOwnMessage = isOwnMessage,
+                        onLongClick = { if (isOwnMessage) showMenu = true }
+                    )
 
-                // Context menu
-                MessageContextMenu(
-                    expanded = showMenu,
-                    onDismiss = { showMenu = false },
-                    onDelete = { onDelete(message.id) }
-                )
+                    // Context menu
+                    MessageContextMenu(
+                        expanded = showMenu,
+                        onDismiss = { showMenu = false },
+                        onDelete = { onDelete(message.id) }
+                    )
+                }
             }
 
             // Retry button for failed messages
@@ -102,14 +141,31 @@ private fun MessageContextMenu(
 ) {
     DropdownMenu(
         expanded = expanded,
-        onDismissRequest = onDismiss
+        onDismissRequest = onDismiss,
+        modifier = Modifier
+            .width(160.dp)
+            .padding(4.dp)
+            .semantics {
+                contentDescription = "Message options menu"
+            }
     ) {
         DropdownMenuItem(
-            text = { Text(stringResource(R.string.delete)) },
+            text = { 
+                Text(
+                    stringResource(R.string.delete),
+                    style = MaterialTheme.typography.labelMedium
+                )
+            },
             onClick = {
                 onDelete()
                 onDismiss()
-            }
+            },
+            modifier = Modifier
+                .padding(12.dp)
+                .fillMaxWidth()
+                .semantics {
+                    contentDescription = "Delete message"
+                }
         )
     }
 }
@@ -119,14 +175,22 @@ private fun MessageContextMenu(
  */
 @Composable
 private fun RetryButton(onClick: () -> Unit) {
+    val interactionSource = remember { MutableInteractionSource() }
+    
     TextButton(
         onClick = onClick,
         contentPadding = PaddingValues(0.dp),
-        modifier = Modifier.height(32.dp)
+        interactionSource = interactionSource,
+        modifier = Modifier
+            .height(48.dp)
+            .widthIn(min = 48.dp)
+            .semantics {
+                contentDescription = "Retry sending message"
+            }
     ) {
         Text(
             stringResource(R.string.retry),
-            color = Color.Red,
+            color = MaterialTheme.colorScheme.error,
             style = MaterialTheme.typography.labelMedium
         )
     }
@@ -139,9 +203,13 @@ private fun MessageBubble(
     isOwnMessage: Boolean,
     onLongClick: () -> Unit
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    
+    val senderInfo = if (isOwnMessage) "Your message" else "Message from ${message.senderName}"
+    
     Surface(
-        tonalElevation = if (isOwnMessage) 2.dp else 0.dp,
-        shadowElevation = 2.dp,
+        tonalElevation = if (isOwnMessage) 2.dp else 1.dp,
+        shadowElevation = if (isOwnMessage) 2.dp else 1.dp,
         shape = RoundedCornerShape(
             topStart = 20.dp,
             topEnd = 20.dp,
@@ -154,10 +222,24 @@ private fun MessageBubble(
             .widthIn(max = 280.dp)
             .combinedClickable(
                 onClick = {},
-                onLongClick = onLongClick
+                onLongClick = onLongClick,
+                interactionSource = interactionSource,
+                indication = rememberRipple(
+                    bounded = true,
+                    radius = 140.dp,
+                    color = if (isOwnMessage) MaterialTheme.colorScheme.onPrimaryContainer
+                    else MaterialTheme.colorScheme.onSurfaceVariant
+                )
             )
+            .semantics {
+                contentDescription = senderInfo
+            }
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
+        Column(
+            modifier = Modifier
+                .padding(12.dp)
+                .animateContentSize()
+        ) {
             // Sender name (for other users)
             if (!isOwnMessage) {
                 Text(
@@ -202,7 +284,7 @@ private fun MediaGallery(mediaUrls: List<String>) {
         items(mediaUrls) { url ->
             AsyncImage(
                 model = url,
-                contentDescription = null,
+                contentDescription = "Attached media image",
                 modifier = Modifier
                     .size(160.dp)
                     .clip(RoundedCornerShape(12.dp)),
@@ -236,7 +318,7 @@ private fun MessageFooter(
     val timestampColor = if (isOwnMessage) {
         MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f)
     } else {
-        Color.Gray
+        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
     }
 
     Row(
@@ -248,8 +330,7 @@ private fun MessageFooter(
         Text(
             text = formattedTime,
             style = MaterialTheme.typography.labelSmall,
-            color = timestampColor,
-            fontSize = 10.sp
+            color = timestampColor
         )
 
         // Status indicator (for own messages)
@@ -271,18 +352,37 @@ private fun MessageStatusIndicator(
     status: MessageStatus,
     defaultColor: Color
 ) {
-    val (statusText, statusColor) = remember(status) {
+    val (statusText, statusColor, contentDesc) = remember(status) {
         when (status) {
-            MessageStatus.SENDING -> "..." to defaultColor
-            MessageStatus.SENT -> "✓" to defaultColor
-            MessageStatus.FAILED -> "⚠" to Color.Red
+            MessageStatus.SENDING -> Triple("...", defaultColor, "Message sending")
+            MessageStatus.SENT -> Triple("✓", defaultColor, "Message sent")
+            MessageStatus.FAILED -> Triple("⚠", Color.Red, "Message failed to send")
         }
     }
+    
+    // Animate color changes
+    val animatedColor by animateColorAsState(
+        targetValue = statusColor,
+        animationSpec = tween(durationMillis = 300)
+    )
+    
+    // Animate scale for sending status
+    val scale by animateFloatAsState(
+        targetValue = if (status == MessageStatus.SENDING) 1.1f else 1.0f,
+        animationSpec = spring(
+            dampingRatio = 0.6f,
+            stiffness = 300f
+        )
+    )
     
     Text(
         text = statusText,
         style = MaterialTheme.typography.labelSmall,
-        color = statusColor,
-        fontSize = 11.sp
+        color = animatedColor,
+        modifier = Modifier
+            .scale(scale)
+            .semantics {
+                contentDescription = contentDesc
+            }
     )
 }

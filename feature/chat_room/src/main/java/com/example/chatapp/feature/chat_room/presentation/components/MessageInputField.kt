@@ -1,6 +1,14 @@
 package com.example.chatapp.feature.chat_room.presentation.components
 
-import android.net.Uri
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -19,6 +27,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.chatapp.feature.chat_room.R
@@ -58,8 +68,22 @@ fun MessageInputField(
             .padding(12.dp)
             .navigationBarsPadding()
     ) {
-        // Selected media preview
-        if (selectedMediaUris.isNotEmpty()) {
+        // Selected media preview with smooth expand/collapse animation
+        AnimatedVisibility(
+            visible = selectedMediaUris.isNotEmpty(),
+            enter = expandVertically(
+                animationSpec = spring(
+                    dampingRatio = 0.7f,
+                    stiffness = 300f
+                )
+            ),
+            exit = shrinkVertically(
+                animationSpec = spring(
+                    dampingRatio = 0.7f,
+                    stiffness = 300f
+                )
+            )
+        ) {
             MediaPreviewRow(
                 selectedMediaUris = selectedMediaUris,
                 onClearMedia = onClearMedia
@@ -96,7 +120,7 @@ private fun MediaPreviewRow(
             modifier = Modifier
                 .padding(12.dp)
                 .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             selectedMediaUris.forEach { uri ->
@@ -115,7 +139,7 @@ private fun MediaThumbnail(uri: String) {
     Box(modifier = Modifier.size(70.dp)) {
         AsyncImage(
             model = uri,
-            contentDescription = null,
+            contentDescription = "Selected media thumbnail",
             modifier = Modifier
                 .fillMaxSize()
                 .clip(RoundedCornerShape(12.dp)),
@@ -129,17 +153,23 @@ private fun MediaThumbnail(uri: String) {
  */
 @Composable
 private fun ClearMediaButton(onClick: () -> Unit) {
+    val interactionSource = remember { MutableInteractionSource() }
+    
     IconButton(
         onClick = onClick,
+        interactionSource = interactionSource,
         modifier = Modifier
             .background(MaterialTheme.colorScheme.errorContainer, CircleShape)
-            .size(32.dp)
+            .size(48.dp)
+            .semantics {
+                contentDescription = "Clear all selected media"
+            }
     ) {
         Icon(
             Icons.Default.Close,
-            contentDescription = stringResource(R.string.clear_all),
+            contentDescription = null,
             tint = MaterialTheme.colorScheme.onErrorContainer,
-            modifier = Modifier.size(16.dp)
+            modifier = Modifier.size(24.dp)
         )
     }
 }
@@ -171,27 +201,32 @@ private fun InputFieldSurface(
         color = MaterialTheme.colorScheme.surface,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Row(
-            modifier = Modifier
-                .padding(horizontal = 8.dp, vertical = 4.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Add media button
-            AddMediaButton(onClick = onPickMedia)
+        Column {
+            Row(
+                modifier = Modifier
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Add media button
+                AddMediaButton(onClick = onPickMedia)
 
-            // Text input
-            MessageTextField(
-                text = text,
-                onTextChange = onTextChange,
-                modifier = Modifier.weight(1f)
-            )
+                // Text input
+                MessageTextField(
+                    text = text,
+                    onTextChange = onTextChange,
+                    modifier = Modifier.weight(1f)
+                )
 
-            // Send button
-            SendButton(
-                canSend = canSend,
-                onClick = onSend
-            )
+                // Send button with visual feedback
+                SendButton(
+                    canSend = canSend,
+                    onClick = onSend
+                )
+            }
+            
+            // Character counter when approaching limit
+            CharacterCounter(text = text)
         }
     }
 }
@@ -201,12 +236,22 @@ private fun InputFieldSurface(
  */
 @Composable
 private fun AddMediaButton(onClick: () -> Unit) {
-    IconButton(onClick = onClick) {
+    val interactionSource = remember { MutableInteractionSource() }
+    
+    IconButton(
+        onClick = onClick,
+        interactionSource = interactionSource,
+        modifier = Modifier
+            .size(48.dp)
+            .semantics {
+                contentDescription = "Add media attachment"
+            }
+    ) {
         Icon(
             Icons.Default.Add,
-            contentDescription = stringResource(R.string.add_media),
+            contentDescription = null,
             tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(28.dp)
+            modifier = Modifier.size(24.dp)
         )
     }
 }
@@ -243,31 +288,88 @@ private fun MessageTextField(
 }
 
 /**
- * Send message button with enabled/disabled state.
+ * Send message button with enabled/disabled state and visual feedback.
  */
 @Composable
 private fun SendButton(
     canSend: Boolean,
     onClick: () -> Unit
 ) {
-    // Compute background color only when canSend changes
-    val backgroundColor = MaterialTheme.colorScheme.primary.let { primary ->
-        if (canSend) primary else primary.copy(alpha = 0.3f)
-    }
+    // Opacity: full when enabled, 30% when disabled
+    val opacity by animateFloatAsState(
+        targetValue = if (canSend) 1.0f else 0.3f,
+        animationSpec = spring(
+            dampingRatio = 0.7f,
+            stiffness = 300f
+        ),
+        label = "send_button_opacity"
+    )
+    
+    val interactionSource = remember { MutableInteractionSource() }
     
     IconButton(
         onClick = onClick,
         enabled = canSend,
+        interactionSource = interactionSource,
         modifier = Modifier
             .padding(4.dp)
-            .background(backgroundColor, CircleShape)
-            .size(40.dp)
+            .background(
+                color = MaterialTheme.colorScheme.primary.copy(alpha = opacity.coerceIn(0f, 1f)),
+                shape = CircleShape
+            )
+            .size(48.dp)
+            .semantics {
+                contentDescription = if (canSend) "Send message" else "Send button disabled"
+            }
     ) {
         Icon(
             Icons.Default.Send,
-            contentDescription = stringResource(R.string.send),
+            contentDescription = null,
             tint = Color.White,
             modifier = Modifier.size(20.dp)
+        )
+    }
+}
+
+/**
+ * Character counter that shows when approaching the character limit.
+ * Shows at 80% of the limit (default 1000 characters).
+ */
+@Composable
+private fun CharacterCounter(text: String) {
+    val maxCharacters = 1000
+    val characterCount = text.length
+    val isApproachingLimit = characterCount >= maxCharacters * 0.8f
+    
+    AnimatedVisibility(
+        visible = isApproachingLimit,
+        enter = fadeIn(
+            animationSpec = tween(durationMillis = 300)
+        ) + expandVertically(
+            animationSpec = tween(durationMillis = 300)
+        ),
+        exit = fadeOut(
+            animationSpec = tween(durationMillis = 300)
+        ) + shrinkVertically(
+            animationSpec = tween(durationMillis = 300)
+        )
+    ) {
+        val remaining = maxCharacters - characterCount
+        
+        Text(
+            text = "$characterCount / $maxCharacters",
+            style = MaterialTheme.typography.labelSmall,
+            color = if (remaining < 0) {
+                MaterialTheme.colorScheme.error
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
+            modifier = Modifier
+                .padding(horizontal = 16.dp, vertical = 4.dp)
+                .fillMaxWidth()
+                .semantics {
+                    contentDescription = "Character count: $characterCount out of $maxCharacters"
+                }
         )
     }
 }

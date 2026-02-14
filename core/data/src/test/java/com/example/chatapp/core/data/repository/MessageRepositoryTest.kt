@@ -96,7 +96,7 @@ class MessageRepositoryTest {
             it.senderName == senderName &&
             it.status == MessageStatus.SENDING
         }) }
-        verify { workScheduler.scheduleMessageSend(any(), text, null, senderId, senderName) }
+        verify { workScheduler.scheduleMessageSend(any(), text, null, senderId, senderName, any()) }
     }
 
     @Test
@@ -120,7 +120,8 @@ class MessageRepositoryTest {
             text, 
             listOf("file://internal/cached", "file://internal/cached"), 
             senderId, 
-            senderName
+            senderName,
+            any()
         ) }
     }
 
@@ -157,7 +158,8 @@ class MessageRepositoryTest {
             text, 
             emptyList(), 
             senderId, 
-            senderName
+            senderName,
+            any()
         ) }
     }
 
