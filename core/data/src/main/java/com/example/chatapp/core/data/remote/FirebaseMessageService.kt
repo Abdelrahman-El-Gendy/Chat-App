@@ -2,6 +2,7 @@ package com.example.chatapp.core.data.remote
 
 import com.example.chatapp.core.data.remote.model.MessageDto
 import com.example.chatapp.core.domain.model.Message
+import com.google.firebase.database.ChildEventListener
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
@@ -28,27 +29,58 @@ class FirebaseMessageService @Inject constructor(
     }
 
     fun getMessages(limit: Int = 50): Flow<List<Message>> = callbackFlow {
-        val query = messagesRef.orderByChild("timestamp").limitToLast(limit)
-        
+        // Use ChildEventListener for more reliable change detection
+        // This properly detects when existing messages are updated (e.g., status change)
+        val messages = mutableMapOf<String, Message>()
+
         android.util.Log.d("FirebaseService", "Setting up messages listener")
         
-        val listener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                android.util.Log.d("FirebaseService", "onDataChange: ${snapshot.childrenCount} messages")
-                val messages = snapshot.children.mapNotNull { 
-                    it.getValue(MessageDto::class.java)?.toDomain() 
+        val listener = object : ChildEventListener {
+            override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
+                snapshot.getValue(MessageDto::class.java)?.toDomain()?.let { message ->
+                    messages[message.id] = message
+                    android.util.Log.d("FirebaseService", "onChildAdded: ${message.id}, status=${message.status}")
+                    emitMessages()
                 }
-                trySend(messages)
+            }
+
+            override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
+                snapshot.getValue(MessageDto::class.java)?.toDomain()?.let { message ->
+                    messages[message.id] = message
+                    android.util.Log.d("FirebaseService", "onChildChanged: ${message.id}, status=${message.status}")
+                    emitMessages()
+                }
+            }
+
+            override fun onChildRemoved(snapshot: DataSnapshot) {
+                snapshot.getValue(MessageDto::class.java)?.toDomain()?.let { message ->
+                    messages.remove(message.id)
+                    android.util.Log.d("FirebaseService", "onChildRemoved: ${message.id}")
+                    emitMessages()
+                }
+            }
+
+            override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {
+                // Not needed for this use case
             }
 
             override fun onCancelled(error: DatabaseError) {
                 android.util.Log.e("FirebaseService", "onCancelled: ${error.message}")
                 close(error.toException())
             }
+
+            private fun emitMessages() {
+                val sortedMessages = messages.values
+                    .sortedBy { it.timestamp }
+                    .takeLast(limit) // Keep only the last 'limit' messages
+
+                android.util.Log.d("FirebaseService", "Emitting ${sortedMessages.size} messages")
+                trySend(sortedMessages)
+            }
         }
 
-        query.addValueEventListener(listener)
-        awaitClose { query.removeEventListener(listener) }
+        messagesRef.addChildEventListener(listener)
+        awaitClose { messagesRef.removeEventListener(listener) }
     }
 
     suspend fun getOlderMessages(lastTimestamp: Long, limit: Int = 20): List<Message> {
