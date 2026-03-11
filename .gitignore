@@ -1,20 +1,68 @@
-# Project exclude paths
-/.gradle/
+####################
+# Gradle
+####################
+.gradle/
+gradle-app.setting
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
 
-# IDE files
-.idea/
-.vscode/
-/app/build/
-/app/build/intermediates/javac/debug/classes/
+####################
+# Build Outputs
+####################
 /build/
-/core/data/build/
-/core/data/build/intermediates/javac/debug/classes/
-/core/domain/build/
-/core/ui/build/
-/feature/auth_identity/build/
-/feature/auth_identity/build/intermediates/javac/debug/classes/
-/feature/chat_room/build/
-/feature/chat_room/build/intermediates/javac/debug/classes/
-/feature/media/build/
-/feature/work/build/
-/feature/work/build/intermediates/javac/debug/classes/
+**/build/
+
+####################
+# Android Studio / IntelliJ IDEA
+####################
+.idea/
+*.iml
+*.iws
+*.ipr
+
+####################
+# VS Code
+####################
+.vscode/
+
+####################
+# AI Agent Files (Firebender, Cursor, Claude, Copilot)
+####################
+.idea/firebender/
+.cursor/
+.claude/
+.copilot/
+*.chat.md
+*.prompt.md
+agents.md
+
+####################
+# Sensitive / Local Config  (NEVER commit these)
+####################
+local.properties
+**/google-services.json
+*.keystore
+*.jks
+*.pfx
+*.p12
+signing.properties
+keystore.properties
+secrets.properties
+
+####################
+# macOS / Windows
+####################
+.DS_Store
+Thumbs.db
+desktop.ini
+
+####################
+# Kotlin / Java
+####################
+*.class
+
+####################
+# Profiling / Captures
+####################
+captures/
+*.hprof
