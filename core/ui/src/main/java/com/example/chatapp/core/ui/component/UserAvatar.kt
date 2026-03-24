@@ -42,7 +42,7 @@ fun UserAvatar(username: String, modifier: Modifier = Modifier) {
         ) {
             Text(
                 text = initials,
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onPrimary,
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
                 style = MaterialTheme.typography.titleMedium

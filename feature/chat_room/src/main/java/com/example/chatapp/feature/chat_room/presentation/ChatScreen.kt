@@ -19,6 +19,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -50,7 +52,10 @@ import kotlinx.coroutines.flow.collectLatest
 @Composable
 fun ChatScreen(
     viewModel: ChatViewModel,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onProfileClick: () -> Unit = {},
+    onSearchClick: () -> Unit = {},
+    onMediaClick: (Int) -> Unit = {}
 ) {
     val state by viewModel.state.collectAsState()
     val listState = rememberLazyListState()
@@ -93,6 +98,8 @@ fun ChatScreen(
         listState = listState,
         snackbarHostState = snackbarHostState,
         onBack = onBack,
+        onProfileClick = onProfileClick,
+        onSearchClick = onSearchClick,
         onMessageInputChange = { text ->
             viewModel.onIntent(ChatIntent.UpdateMessageInput(text))
         },
@@ -195,6 +202,8 @@ private fun ChatScreenContent(
     listState: LazyListState,
     snackbarHostState: SnackbarHostState,
     onBack: () -> Unit,
+    onProfileClick: () -> Unit,
+    onSearchClick: () -> Unit,
     onMessageInputChange: (String) -> Unit,
     onSendMessage: () -> Unit,
     onPickMedia: () -> Unit,
@@ -207,7 +216,9 @@ private fun ChatScreenContent(
         topBar = {
             ChatTopBar(
                 userName = state.currentUserName,
-                onBack = onBack
+                onBack = onBack,
+                onProfileClick = onProfileClick,
+                onSearchClick = onSearchClick
             )
         },
         bottomBar = {
@@ -244,7 +255,9 @@ private fun ChatScreenContent(
 @Composable
 private fun ChatTopBar(
     userName: String,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onProfileClick: () -> Unit = {},
+    onSearchClick: () -> Unit = {}
 ) {
     TopAppBar(
         title = {
@@ -273,6 +286,20 @@ private fun ChatTopBar(
                 }
             ) {
                 Icon(Icons.Default.ArrowBack, contentDescription = null)
+            }
+        },
+        actions = {
+            IconButton(onClick = onSearchClick) {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = "Search messages"
+                )
+            }
+            IconButton(onClick = onProfileClick) {
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = "Profile"
+                )
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(

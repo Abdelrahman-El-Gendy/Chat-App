@@ -82,7 +82,6 @@ class FirebaseMessageService @Inject constructor(
         messagesRef.addChildEventListener(listener)
         awaitClose { messagesRef.removeEventListener(listener) }
     }
-
     suspend fun getOlderMessages(lastTimestamp: Long, limit: Int = 20): List<Message> {
         val snapshot = messagesRef.orderByChild("timestamp")
             .endBefore(lastTimestamp.toDouble())
@@ -113,4 +112,18 @@ class FirebaseMessageService @Inject constructor(
         typingRef.addValueEventListener(listener)
         awaitClose { typingRef.removeEventListener(listener) }
     }
+
+    suspend fun markAsRead(channelId: String, upToTimestamp: Long) {
+        // Store read receipt under channels/{channelId}/readBy
+        // For now using a simple timestamp approach
+        try {
+            database.getReference("channels/$channelId/readBy")
+                .child(System.currentTimeMillis().toString())
+                .setValue(upToTimestamp)
+                .await()
+        } catch (_: Exception) {
+            // Silently fail read receipts
+        }
+    }
 }
+

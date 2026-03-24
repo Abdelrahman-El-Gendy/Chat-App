@@ -211,10 +211,10 @@ private fun MessageBubble(
         tonalElevation = if (isOwnMessage) 2.dp else 1.dp,
         shadowElevation = if (isOwnMessage) 2.dp else 1.dp,
         shape = RoundedCornerShape(
-            topStart = 20.dp,
-            topEnd = 20.dp,
-            bottomStart = if (isOwnMessage) 20.dp else 4.dp,
-            bottomEnd = if (isOwnMessage) 4.dp else 20.dp
+            topStart = 12.dp,
+            topEnd = 12.dp,
+            bottomStart = if (isOwnMessage) 12.dp else 4.dp,
+            bottomEnd = if (isOwnMessage) 4.dp else 12.dp
         ),
         color = if (isOwnMessage) MaterialTheme.colorScheme.primaryContainer
         else MaterialTheme.colorScheme.surfaceVariant,
@@ -352,11 +352,13 @@ private fun MessageStatusIndicator(
     status: MessageStatus,
     defaultColor: Color
 ) {
-    val (statusText, statusColor, contentDesc) = remember(status) {
+    val errorColor = MaterialTheme.colorScheme.error
+    val (statusText, statusColor, contentDesc) = remember(status, defaultColor, errorColor) {
         when (status) {
             MessageStatus.SENDING -> Triple("...", defaultColor, "Message sending")
             MessageStatus.SENT -> Triple("✓", defaultColor, "Message sent")
-            MessageStatus.FAILED -> Triple("⚠", Color.Red, "Message failed to send")
+            MessageStatus.FAILED -> Triple("⚠", errorColor, "Message failed to send")
+            MessageStatus.READ -> Triple("✓✓", defaultColor, "Message read")
         }
     }
     

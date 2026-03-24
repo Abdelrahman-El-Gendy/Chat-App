@@ -58,6 +58,7 @@ dependencies {
     implementation(project(":core:ui"))
     implementation(project(":feature:auth_identity"))
     implementation(project(":feature:chat_room"))
+    implementation(project(":feature:media"))
     implementation(project(":feature:work"))
 
     implementation(libs.androidx.core.ktx)
@@ -67,6 +68,10 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.material.icons.extended)
+    
+    // Navigation
+    implementation(libs.androidx.navigation.compose)
     
     // Firebase
     implementation(platform(libs.firebase.bom))
