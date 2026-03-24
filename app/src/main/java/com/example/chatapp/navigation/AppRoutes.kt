@@ -12,9 +12,14 @@ object AppRoutes {
     const val PROFILE = "profile"
     const val SETTINGS = "settings"
     const val SEARCH = "search"
+    const val CALLS = "calls"
+    const val UPDATES = "updates"
     const val MEDIA_VIEWER = "media_viewer/{startIndex}"
 
     // Builder helpers
     fun chat(channelId: String) = "chat/$channelId"
     fun mediaViewer(startIndex: Int) = "media_viewer/$startIndex"
+
+    /** Routes that show the bottom navigation bar */
+    val BOTTOM_NAV_ROUTES = setOf(CHANNEL_LIST, SEARCH, CALLS, UPDATES, SETTINGS)
 }

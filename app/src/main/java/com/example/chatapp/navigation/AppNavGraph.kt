@@ -13,12 +13,16 @@ import com.example.chatapp.feature.auth_identity.presentation.ProfileScreen
 import com.example.chatapp.feature.auth_identity.presentation.ProfileViewModel
 import com.example.chatapp.feature.auth_identity.presentation.SettingsScreen
 import com.example.chatapp.feature.auth_identity.presentation.SettingsViewModel
+import com.example.chatapp.feature.chat_room.presentation.CallsScreen
+import com.example.chatapp.feature.chat_room.presentation.CallsViewModel
 import com.example.chatapp.feature.chat_room.presentation.ChatScreen
 import com.example.chatapp.feature.chat_room.presentation.ChatViewModel
 import com.example.chatapp.feature.chat_room.presentation.ChannelListScreen
 import com.example.chatapp.feature.chat_room.presentation.ChannelListViewModel
 import com.example.chatapp.feature.chat_room.presentation.SearchScreen
 import com.example.chatapp.feature.chat_room.presentation.SearchViewModel
+import com.example.chatapp.feature.chat_room.presentation.UpdatesScreen
+import com.example.chatapp.feature.chat_room.presentation.UpdatesViewModel
 
 /**
  * Main Navigation Graph for the Chat App.
@@ -48,7 +52,7 @@ fun AppNavGraph(
             )
         }
 
-        // ── Channel List Screen ──
+        // ── Channel List Screen (Chats tab) ──
         composable(AppRoutes.CHANNEL_LIST) {
             val viewModel: ChannelListViewModel = hiltViewModel()
             ChannelListScreen(
@@ -93,7 +97,7 @@ fun AppNavGraph(
             )
         }
 
-        // ── Settings Screen ──
+        // ── Settings Screen (tab) ──
         composable(AppRoutes.SETTINGS) {
             val viewModel: SettingsViewModel = hiltViewModel()
             SettingsScreen(
@@ -107,19 +111,28 @@ fun AppNavGraph(
             )
         }
 
-        // ── Search Screen ──
+        // ── Search Screen (tab) ──
         composable(AppRoutes.SEARCH) {
             val viewModel: SearchViewModel = hiltViewModel()
             SearchScreen(
                 viewModel = viewModel,
                 onBack = { navController.popBackStack() },
                 onMessageClick = {
-                    // Pop back to chat and scroll to that message
                     navController.popBackStack()
                 }
             )
         }
 
+        // ── Calls Screen (tab) ──
+        composable(AppRoutes.CALLS) {
+            val viewModel: CallsViewModel = hiltViewModel()
+            CallsScreen(viewModel = viewModel)
+        }
 
+        // ── Updates Screen (tab) ──
+        composable(AppRoutes.UPDATES) {
+            val viewModel: UpdatesViewModel = hiltViewModel()
+            UpdatesScreen(viewModel = viewModel)
+        }
     }
 }
