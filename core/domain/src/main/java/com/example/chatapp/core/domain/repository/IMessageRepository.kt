@@ -10,4 +10,6 @@ interface IMessageRepository {
     suspend fun queueMessage(text: String?, mediaUris: List<String>?, senderId: String, senderName: String)
     suspend fun deleteMessage(messageId: String)
     fun getTypingUsers(): Flow<List<String>>
+    fun searchMessages(query: String): Flow<List<Message>>
+    suspend fun markAsRead(channelId: String, upToTimestamp: Long)
 }

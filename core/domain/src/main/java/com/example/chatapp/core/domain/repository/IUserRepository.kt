@@ -9,4 +9,8 @@ interface IUserRepository {
     fun getDeviceId(): Flow<String>
     suspend fun saveDeviceId(deviceId: String)
     suspend fun setTypingStatus(isTyping: Boolean)
+    fun getUserProfile(): Flow<User>
+    suspend fun updateProfile(user: User): Result<Unit>
+    suspend fun uploadAvatar(uriString: String): Result<String>
+    suspend fun clearUserData()
 }

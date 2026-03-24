@@ -9,9 +9,11 @@ data class Message(
     val senderId: String,
     val senderName: String,
     val timestamp: Long = System.currentTimeMillis(),
-    val status: MessageStatus = MessageStatus.SENDING
+    val status: MessageStatus = MessageStatus.SENDING,
+    val channelId: String = "general"
 )
 
 enum class MessageStatus {
-    SENDING, SENT, FAILED
+    SENDING, SENT, FAILED, READ
 }
+

@@ -4,8 +4,8 @@ import com.example.chatapp.core.data.remote.FirebaseMessageService
 import com.example.chatapp.core.domain.model.Message
 import com.example.chatapp.core.domain.repository.IMessageRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
-
 import com.example.chatapp.core.domain.repository.IWorkScheduler
 import androidx.core.net.toUri
 
@@ -44,10 +44,10 @@ class MessageRepository @Inject constructor(
             timestamp = timestamp,
             status = com.example.chatapp.core.domain.model.MessageStatus.SENDING
         )
-        
+
         // Send initial message with SENDING status for immediate UI feedback
         firebaseService.sendMessageNonSuspend(initialMessage)
-        
+
         // Schedule worker to update status to SENT after successful delivery
         workScheduler.scheduleMessageSend(messageId, text, finalMediaUris, senderId, senderName, timestamp)
     }
@@ -57,4 +57,24 @@ class MessageRepository @Inject constructor(
     }
 
     override fun getTypingUsers(): Flow<List<String>> = firebaseService.getTypingUsers()
+
+    override fun searchMessages(query: String): Flow<List<Message>> {
+        // Client-side filtering: Firebase RTDB has limited text search
+        return firebaseService.getMessages().map { messages ->
+            if (query.isBlank()) {
+                emptyList()
+            } else {
+                messages.filter { message ->
+                    message.text?.contains(query, ignoreCase = true) == true ||
+                    message.senderName.contains(query, ignoreCase = true)
+                }
+            }
+        }
+    }
+
+    override suspend fun markAsRead(channelId: String, upToTimestamp: Long) {
+        // Write read receipt to Firebase
+        // channels/{channelId}/readBy/{deviceId} = upToTimestamp
+        firebaseService.markAsRead(channelId, upToTimestamp)
+    }
 }

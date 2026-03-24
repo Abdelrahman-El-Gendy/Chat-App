@@ -10,7 +10,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -123,7 +122,7 @@ private fun WelcomeAvatar() {
         modifier = Modifier.size(100.dp),
         shape = CircleShape,
         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.2f),
-        border = BorderStroke(2.dp, Color.White.copy(alpha = 0.5f))
+        border = BorderStroke(2.dp, MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.5f))
     ) {
         Box(contentAlignment = Alignment.Center) {
             Text(
@@ -141,11 +140,11 @@ private fun UsernameCard(
     onSubmit: (String) -> Unit
 ) {
     Card(
-        shape = RoundedCornerShape(32.dp),
+        shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.97f)
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
             modifier = Modifier.padding(32.dp),

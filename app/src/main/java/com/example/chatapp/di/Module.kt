@@ -2,8 +2,11 @@ package com.example.chatapp.di
 
 import android.content.Context
 import com.example.chatapp.core.data.local.DataStoreManager
+import com.example.chatapp.core.data.local.SettingsDataStore
+import com.example.chatapp.core.data.repository.ChannelRepository
 import com.example.chatapp.core.data.repository.MessageRepository
 import com.example.chatapp.core.data.repository.UserRepository
+import com.example.chatapp.core.domain.repository.IChannelRepository
 import com.example.chatapp.core.domain.repository.IMessageRepository
 import com.example.chatapp.core.domain.repository.IUserRepository
 import dagger.Module
@@ -27,11 +30,25 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideSettingsDataStore(@ApplicationContext context: Context): SettingsDataStore {
+        return SettingsDataStore(context)
+    }
+
+    @Provides
+    @Singleton
     fun provideUserRepository(repository: UserRepository): IUserRepository = repository
 
     @Provides
     @Singleton
     fun provideMessageRepository(repository: MessageRepository): IMessageRepository = repository
+
+    @Provides
+    @Singleton
+    fun provideChannelRepository(repository: ChannelRepository): IChannelRepository = repository
+
+    @Provides
+    @Singleton
+    fun provideSettingsRepository(repository: com.example.chatapp.core.data.repository.SettingsRepository): com.example.chatapp.core.domain.repository.ISettingsRepository = repository
 
     @Provides
     @Singleton

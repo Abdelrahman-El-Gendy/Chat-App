@@ -3,43 +3,39 @@ package com.example.chatapp.core.ui.theme
 import androidx.compose.ui.unit.dp
 
 /**
- * Shape definitions for the design system.
- * Provides consistent corner radius values throughout the application.
+ * Shape definitions for the Terra design system.
+ * Roundness: ROUND_TWELVE  (12 dp as the baseline corner radius).
+ * Principle: Avoid sharp corners – everything should feel soft and approachable.
  */
 object Shape {
     /**
-     * Small corner radius for subtle rounding.
-     * Used for: Media previews, small chips
-     */
-    val small = 12.dp
-
-    /**
-     * Medium corner radius for standard components.
-     * Used for: Message bubbles (asymmetric), cards
-     */
-    val medium = 20.dp
-
-    /**
-     * Large corner radius for prominent components.
-     * Used for: Input fields, dialogs, bottom sheets
-     */
-    val large = 24.dp
-
-    /**
-     * Extra small corner radius for minimal rounding.
-     * Used for: Small buttons, tags
+     * Extra small – minimal rounding for small buttons, tags, chips.
      */
     val extraSmall = 4.dp
 
     /**
-     * Extra large corner radius for maximum rounding.
-     * Used for: Large cards, panels
+     * Small – media previews, avatar clips, small card decorations.
      */
-    val extraLarge = 16.dp
+    val small = 8.dp
 
     /**
-     * Maximum corner radius for pill-shaped elements.
-     * Used for: Chips, pills, circular elements
+     * Medium – the primary Terra radius: message bubbles, cards, dialogs.
+     * ROUND_TWELVE baseline per Stitch design theme.
+     */
+    val medium = 12.dp
+
+    /**
+     * Large – input fields, bottom sheets, prominent panels.
+     */
+    val large = 16.dp
+
+    /**
+     * Extra large – large cards, expanded panels.
+     */
+    val extraLarge = 24.dp
+
+    /**
+     * Maximum – pill-shaped chips, FABs, circular elements.
      */
     val maximum = 9999.dp
 }
